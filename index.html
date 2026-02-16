@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SeatScout — Find the Best Ticket Price</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f172a;--card:#1e293b;--card2:#334155;--accent:#6366f1;--accent2:#818cf8;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--text:#f1f5f9;--text2:#94a3b8;--border:#334155}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* Header */
+.header{padding:20px 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.logo{font-size:24px;font-weight:800;background:linear-gradient(135deg,var(--accent),#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo span{font-weight:400;opacity:.7}
+.header-links{display:flex;gap:20px;font-size:13px;color:var(--text2)}
+.header-links a{color:var(--text2);text-decoration:none}
+.header-links a:hover{color:var(--text)}
+
+/* Search */
+.search-section{max-width:900px;margin:40px auto;padding:0 24px}
+.search-bar{background:var(--card);border-radius:16px;padding:24px;display:flex;gap:12px;align-items:end;flex-wrap:wrap;border:1px solid var(--border)}
+.search-field{flex:1;min-width:200px}
+.search-field label{display:block;font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.search-field input,.search-field select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-family:inherit;font-size:14px;outline:none;transition:border .2s}
+.search-field input:focus{border-color:var(--accent)}
+.search-btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:12px 32px;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;transition:background .2s;white-space:nowrap}
+.search-btn:hover{background:var(--accent2)}
+
+/* Event Hero */
+.event-hero{max-width:900px;margin:32px auto 0;padding:0 24px}
+.event-card{background:var(--card);border-radius:16px;padding:28px;display:flex;gap:24px;align-items:center;border:1px solid var(--border)}
+.event-img{width:120px;height:120px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;font-size:48px;flex-shrink:0}
+.event-info h1{font-size:24px;font-weight:700;margin-bottom:4px}
+.event-info .venue{color:var(--accent2);font-size:14px;margin-bottom:2px}
+.event-info .date{color:var(--text2);font-size:13px;margin-bottom:12px}
+.event-meta{display:flex;gap:16px;flex-wrap:wrap}
+.meta-tag{background:var(--bg);padding:4px 12px;border-radius:20px;font-size:12px;color:var(--text2)}
+.meta-tag.face{color:var(--green);border:1px solid var(--green)33}
+
+/* Filters */
+.filters{max-width:900px;margin:24px auto;padding:0 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.filter-label{font-size:12px;color:var(--text2);font-weight:600}
+.filter-btn{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .2s}
+.filter-btn:hover,.filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.sort-select{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text);font-family:inherit;margin-left:auto}
+
+/* Results */
+.results{max-width:900px;margin:16px auto;padding:0 24px 60px}
+.result-count{font-size:13px;color:var(--text2);margin-bottom:16px}
+.ticket-row{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:16px;border:1px solid var(--border);transition:border .2s;cursor:pointer}
+.ticket-row:hover{border-color:var(--accent)}
+.ticket-row.best{border-color:var(--green);background:var(--green)08}
+.ticket-source{width:120px;flex-shrink:0}
+.source-name{font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px}
+.source-icon{width:20px;height:20px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.source-type{font-size:11px;color:var(--text2);margin-top:2px}
+.ticket-details{flex:1}
+.ticket-section{font-size:13px;font-weight:500}
+.ticket-row-info{font-size:12px;color:var(--text2);margin-top:2px}
+.ticket-qty{font-size:12px;color:var(--text2);width:60px;text-align:center}
+.ticket-price{text-align:right;min-width:100px}
+.price-main{font-size:20px;font-weight:700}
+.price-fees{font-size:11px;color:var(--text2)}
+.price-savings{font-size:11px;color:var(--green);font-weight:500}
+.price-markup{font-size:11px;color:var(--red);font-weight:500}
+.buy-btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;transition:background .2s}
+.buy-btn:hover{background:var(--accent2)}
+.best-badge{background:var(--green);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-left:8px}
+
+/* Reddit/FB styling */
+.community-tag{background:#ff440020;color:#ff4500;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600}
+.fb-tag{background:#1877f220;color:#1877f2;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600}
+
+/* Price chart */
+.price-chart{max-width:900px;margin:0 auto 24px;padding:0 24px}
+.chart-card{background:var(--card);border-radius:12px;padding:20px;border:1px solid var(--border)}
+.chart-title{font-size:14px;font-weight:600;margin-bottom:12px}
+.chart-bar-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.chart-label{width:110px;font-size:12px;color:var(--text2);text-align:right;flex-shrink:0}
+.chart-bar{height:24px;border-radius:4px;position:relative;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:600;min-width:30px;transition:width .5s}
+.chart-price{font-size:12px;color:var(--text);margin-left:8px;white-space:nowrap}
+
+/* Mobile */
+@media(max-width:768px){
+  .search-bar{flex-direction:column}
+  .search-field{min-width:100%}
+  .event-card{flex-direction:column;text-align:center}
+  .ticket-row{flex-wrap:wrap;gap:10px}
+  .ticket-source{width:100%}
+  .ticket-price{text-align:left}
+  .filters{flex-direction:column;align-items:flex-start}
+  .sort-select{margin-left:0}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">SeatScout<span> .io</span></div>
+  <div class="header-links">
+    <a href="#">How It Works</a>
+    <a href="#">Alerts</a>
+    <a href="#">About</a>
+  </div>
+</div>
+
+<div class="search-section">
+  <div class="search-bar">
+    <div class="search-field" style="flex:2">
+      <label>Event / Artist</label>
+      <input type="text" value="Kendrick Lamar — Grand National Tour" id="eventSearch">
+    </div>
+    <div class="search-field">
+      <label>City</label>
+      <input type="text" value="New York, NY">
+    </div>
+    <div class="search-field" style="flex:.7">
+      <label>Tickets</label>
+      <select>
+        <option>2 tickets</option>
+        <option>1 ticket</option>
+        <option>3 tickets</option>
+        <option>4 tickets</option>
+      </select>
+    </div>
+    <button class="search-btn" onclick="search()">🔍 Scout Prices</button>
+  </div>
+</div>
+
+<div class="event-hero">
+  <div class="event-card">
+    <div class="event-img">🎤</div>
+    <div class="event-info">
+      <h1>Kendrick Lamar — Grand National Tour</h1>
+      <div class="venue">Madison Square Garden</div>
+      <div class="date">Saturday, June 14, 2026 · 8:00 PM · Doors 7:00 PM</div>
+      <div class="event-meta">
+        <span class="meta-tag face">💲 Face Value: $95 – $350</span>
+        <span class="meta-tag">🏟️ 20,789 capacity</span>
+        <span class="meta-tag">🔥 High Demand</span>
+        <span class="meta-tag">📉 Prices dropping</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="price-chart">
+  <div class="chart-card">
+    <div class="chart-title">💰 Price Comparison (GA / Lower Bowl avg)</div>
+    <div class="chart-bar-row">
+      <div class="chart-label">r/KendrickLamar</div>
+      <div class="chart-bar" style="width:25%;background:var(--green)">$89</div>
+      <div class="chart-price">Below face 🔥</div>
+    </div>
+    <div class="chart-bar-row">
+      <div class="chart-label">Facebook</div>
+      <div class="chart-bar" style="width:30%;background:#22c55e99">$105</div>
+      <div class="chart-price"></div>
+    </div>
+    <div class="chart-bar-row">
+      <div class="chart-label">Face Value</div>
+      <div class="chart-bar" style="width:35%;background:var(--text2)">$125</div>
+      <div class="chart-price">Original price</div>
+    </div>
+    <div class="chart-bar-row">
+      <div class="chart-label">SeatGeek</div>
+      <div class="chart-bar" style="width:50%;background:var(--accent)">$178</div>
+      <div class="chart-price"></div>
+    </div>
+    <div class="chart-bar-row">
+      <div class="chart-label">StubHub</div>
+      <div class="chart-bar" style="width:55%;background:#6366f199">$195</div>
+      <div class="chart-price"></div>
+    </div>
+    <div class="chart-bar-row">
+      <div class="chart-label">Ticketmaster</div>
+      <div class="chart-bar" style="width:60%;background:var(--amber)">$210</div>
+      <div class="chart-price">+$38 fees</div>
+    </div>
+    <div class="chart-bar-row">
+      <div class="chart-label">VividSeats</div>
+      <div class="chart-bar" style="width:65%;background:var(--red)">$225</div>
+      <div class="chart-price"></div>
+    </div>
+  </div>
+</div>
+
+<div class="filters">
+  <span class="filter-label">Section:</span>
+  <button class="filter-btn active">All</button>
+  <button class="filter-btn">Floor / GA</button>
+  <button class="filter-btn">Lower Bowl</button>
+  <button class="filter-btn">Upper Bowl</button>
+  <button class="filter-btn">VIP</button>
+  <select class="sort-select">
+    <option>Sort: Price (Low → High)</option>
+    <option>Sort: Price (High → Low)</option>
+    <option>Sort: Best Value</option>
+    <option>Sort: Source</option>
+  </select>
+</div>
+
+<div class="results">
+  <div class="result-count">Found <strong>23 listings</strong> across 7 sources · Prices updated 2 min ago</div>
+
+  <div class="ticket-row best">
+    <div class="ticket-source">
+      <div class="source-name"><span class="source-icon" style="background:#ff4500">R</span> Reddit <span class="best-badge">BEST</span></div>
+      <div class="source-type"><span class="community-tag">Community</span> r/KendrickLamar</div>
+    </div>
+    <div class="ticket-details">
+      <div class="ticket-section">Section 119 · Row 8</div>
+      <div class="ticket-row-info">Seller: u/kdot_fan_nyc · ⭐ 4.8 (12 trades) · "Can't make it, selling at cost"</div>
+    </div>
+    <div class="ticket-qty">2 tix</div>
+    <div class="ticket-price">
+      <div class="price-main">$89</div>
+      <div class="price-fees">No fees</div>
+      <div class="price-savings">29% below face value</div>
+    </div>
+    <button class="buy-btn">Message →</button>
+  </div>
+
+  <div class="ticket-row">
+    <div class="ticket-source">
+      <div class="source-name"><span class="source-icon" style="background:#1877f2">f</span> Facebook</div>
+      <div class="source-type"><span class="fb-tag">Marketplace</span> NYC Concert Tickets</div>
+    </div>
+    <div class="ticket-details">
+      <div class="ticket-section">Section 226 · Row 3</div>
+      <div class="ticket-row-info">Seller: Maria G. · "Selling pair, plans changed" · Listed 2h ago</div>
+    </div>
+    <div class="ticket-qty">2 tix</div>
+    <div class="ticket-price">
+      <div class="price-main">$105</div>
+      <div class="price-fees">No fees</div>
+      <div class="price-savings">16% below face</div>
+    </div>
+    <button class="buy-btn">Message →</button>
+  </div>
+
+  <div class="ticket-row">
+    <div class="ticket-source">
+      <div class="source-name"><span class="source-icon" style="background:#ff4500">R</span> Reddit</div>
+      <div class="source-type"><span class="community-tag">Community</span> r/NYConcerts</div>
+    </div>
+    <div class="ticket-details">
+      <div class="ticket-section">GA Floor</div>
+      <div class="ticket-row-info">Seller: u/concert_junkie · ⭐ 5.0 (8 trades) · "Face value, just need 1 gone"</div>
+    </div>
+    <div class="ticket-qty">1 tix</div>
+    <div class="ticket-price">
+      <div class="price-main">$125</div>
+      <div class="price-fees">No fees</div>
+      <div class="price-savings">At face value ✓</div>
+    </div>
+    <button class="buy-btn">Message →</button>
+  </div>
+
+  <div class="ticket-row">
+    <div class="ticket-source">
+      <div class="source-name"><span class="source-icon" style="background:#4ade80">SG</span> SeatGeek</div>
+      <div class="source-type">Verified Resale</div>
+    </div>
+    <div class="ticket-details">
+      <div class="ticket-section">Section 107 · Row 12</div>
+      <div class="ticket-row-info">Instant download · Buyer guarantee · SeatGeek Deal Score: 8.4</div>
+    </div>
+    <div class="ticket-qty">2 tix</div>
+    <div class="ticket-price">
+      <div class="price-main">$178</div>
+      <div class="price-fees">+$29 fees ($207 total)</div>
+      <div class="price-markup">42% above face</div>
+    </div>
+    <button class="buy-btn">Buy →</button>
+  </div>
+
+  <div class="ticket-row">
+    <div class="ticket-source">
+      <div class="source-name"><span class="source-icon" style="background:#3b82f6">SH</span> StubHub</div>
+      <div class="source-type">Verified Resale</div>
+    </div>
+    <div class="ticket-details">
+      <div class="ticket-section">Section 210 · Row 5</div>
+      <div class="ticket-row-info">Instant download · FanProtect Guarantee</div>
+    </div>
+    <div class="ticket-qty">2 tix</div>
+    <div class="ticket-price">
+      <div class="price-main">$195</div>
+      <div class="price-fees">+$42 fees ($237 total)</div>
+      <div class="price-markup">56% above face</div>
+    </div>
+    <button class="buy-btn">Buy →</button>
+  </div>
+
+  <div class="ticket-row">
+    <div class="ticket-source">
+      <div class="source-name"><span class="source-icon" style="background:#0ea5e9">TM</span> Ticketmaster</div>
+      <div class="source-type">Official · Verified Resale</div>
+    </div>
+    <div class="ticket-details">
+      <div class="ticket-section">Section 114 · Row 18</div>
+      <div class="ticket-row-info">Official resale · Verified ticket transfer</div>
+    </div>
+    <div class="ticket-qty">2 tix</div>
+    <div class="ticket-price">
+      <div class="price-main">$210</div>
+      <div class="price-fees">+$38 fees ($248 total)</div>
+      <div class="price-markup">68% above face</div>
+    </div>
+    <button class="buy-btn">Buy →</button>
+  </div>
+
+  <div class="ticket-row">
+    <div class="ticket-source">
+      <div class="source-name"><span class="source-icon" style="background:#f59e0b">VS</span> VividSeats</div>
+      <div class="source-type">Verified Resale</div>
+    </div>
+    <div class="ticket-details">
+      <div class="ticket-section">Section 103 · Row 6</div>
+      <div class="ticket-row-info">100% Buyer Guarantee · Instant download</div>
+    </div>
+    <div class="ticket-qty">2 tix</div>
+    <div class="ticket-price">
+      <div class="price-main">$225</div>
+      <div class="price-fees">+$45 fees ($270 total)</div>
+      <div class="price-markup">80% above face</div>
+    </div>
+    <button class="buy-btn">Buy →</button>
+  </div>
+
+  <div class="ticket-row">
+    <div class="ticket-source">
+      <div class="source-name"><span class="source-icon" style="background:#a855f7">GE</span> Gametime</div>
+      <div class="source-type">Last-Minute Deals</div>
+    </div>
+    <div class="ticket-details">
+      <div class="ticket-section">Section 222 · Row 11</div>
+      <div class="ticket-row-info">All-in pricing · Last-minute guarantee · Price may drop closer to event</div>
+    </div>
+    <div class="ticket-qty">2 tix</div>
+    <div class="ticket-price">
+      <div class="price-main">$189</div>
+      <div class="price-fees">All-in (no extra fees)</div>
+      <div class="price-markup">51% above face</div>
+    </div>
+    <button class="buy-btn">Buy →</button>
+  </div>
+
+  <div class="ticket-row">
+    <div class="ticket-source">
+      <div class="source-name"><span class="source-icon" style="background:#0ea5e9">TM</span> Ticketmaster</div>
+      <div class="source-type">Official · Primary</div>
+    </div>
+    <div class="ticket-details">
+      <div class="ticket-section">Upper Bowl · Section 310 · Row 2</div>
+      <div class="ticket-row-info">⚡ Official primary release · Standard admission</div>
+    </div>
+    <div class="ticket-qty">2 tix</div>
+    <div class="ticket-price">
+      <div class="price-main">$95</div>
+      <div class="price-fees">+$22 fees ($117 total)</div>
+      <div class="price-savings">Face value (upper)</div>
+    </div>
+    <button class="buy-btn">Buy →</button>
+  </div>
+
+</div>
+
+<script>
+function search(){
+  const q=document.getElementById('eventSearch').value;
+  alert('🔍 Searching for: '+q+'\n\nThis is a demo — in production this would scrape/API all ticket sources in real-time.');
+}
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>

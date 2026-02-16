@@ -148,7 +148,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 <div class="price-chart">
   <div class="chart-card">
-    <div class="chart-title">💰 Price Comparison (GA / Lower Bowl avg)</div>
+    <div class="chart-title">💰 Total Price Comparison (ticket + fees)</div>
     <div class="chart-bar-row">
       <div class="chart-label">r/KendrickLamar</div>
       <div class="chart-bar" style="width:25%;background:var(--green)">$89</div>
@@ -166,22 +166,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
     <div class="chart-bar-row">
       <div class="chart-label">SeatGeek</div>
-      <div class="chart-bar" style="width:50%;background:var(--accent)">$178</div>
+      <div class="chart-bar" style="width:55%;background:var(--accent)">$207</div>
       <div class="chart-price"></div>
     </div>
     <div class="chart-bar-row">
       <div class="chart-label">StubHub</div>
-      <div class="chart-bar" style="width:55%;background:#6366f199">$195</div>
+      <div class="chart-bar" style="width:63%;background:#6366f199">$237</div>
       <div class="chart-price"></div>
     </div>
     <div class="chart-bar-row">
       <div class="chart-label">Ticketmaster</div>
-      <div class="chart-bar" style="width:60%;background:var(--amber)">$210</div>
-      <div class="chart-price">+$38 fees</div>
+      <div class="chart-bar" style="width:67%;background:var(--amber)">$248</div>
+      <div class="chart-price">incl. $38 fees</div>
     </div>
     <div class="chart-bar-row">
       <div class="chart-label">VividSeats</div>
-      <div class="chart-bar" style="width:65%;background:var(--red)">$225</div>
+      <div class="chart-bar" style="width:73%;background:var(--red)">$270</div>
       <div class="chart-price"></div>
     </div>
   </div>
@@ -204,6 +204,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 <div class="results">
   <div class="result-count">Found <strong>23 listings</strong> across 7 sources · Prices updated 2 min ago</div>
+  <div style="background:var(--card);border-radius:10px;padding:14px 20px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap;border:1px solid var(--border);font-size:13px">
+    <div><span style="color:var(--text2)">Avg Platform Fees:</span> <span style="color:var(--amber);font-weight:600">$35 (18%)</span></div>
+    <div><span style="color:var(--text2)">Best Total Price:</span> <span style="color:var(--green);font-weight:600">$89 (Reddit — no fees)</span></div>
+    <div><span style="color:var(--text2)">Worst Total Price:</span> <span style="color:var(--red);font-weight:600">$270 (VividSeats w/ fees)</span></div>
+    <div><span style="color:var(--text2)">Face Value:</span> <span style="font-weight:600">$125 (lower bowl)</span></div>
+  </div>
 
   <div class="ticket-row best">
     <div class="ticket-source">
@@ -216,8 +222,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
     <div class="ticket-qty">2 tix</div>
     <div class="ticket-price">
-      <div class="price-main">$89</div>
-      <div class="price-fees">No fees</div>
+      <div class="price-main" style="color:var(--green)">$89 total</div>
+      <div class="price-fees">$89 ticket · $0 fees</div>
       <div class="price-savings">29% below face value</div>
     </div>
     <button class="buy-btn">Message →</button>
@@ -234,8 +240,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
     <div class="ticket-qty">2 tix</div>
     <div class="ticket-price">
-      <div class="price-main">$105</div>
-      <div class="price-fees">No fees</div>
+      <div class="price-main">$105 total</div>
+      <div class="price-fees">$105 ticket · $0 fees</div>
       <div class="price-savings">16% below face</div>
     </div>
     <button class="buy-btn">Message →</button>
@@ -252,8 +258,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
     <div class="ticket-qty">1 tix</div>
     <div class="ticket-price">
-      <div class="price-main">$125</div>
-      <div class="price-fees">No fees</div>
+      <div class="price-main">$125 total</div>
+      <div class="price-fees">$125 ticket · $0 fees</div>
       <div class="price-savings">At face value ✓</div>
     </div>
     <button class="buy-btn">Message →</button>
@@ -270,9 +276,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
     <div class="ticket-qty">2 tix</div>
     <div class="ticket-price">
-      <div class="price-main">$178</div>
-      <div class="price-fees">+$29 fees ($207 total)</div>
-      <div class="price-markup">42% above face</div>
+      <div class="price-main">$207 total</div>
+      <div class="price-fees">$178 ticket · $29 fees (16%)</div>
+      <div class="price-markup">66% above face</div>
     </div>
     <button class="buy-btn">Buy →</button>
   </div>
@@ -288,9 +294,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
     <div class="ticket-qty">2 tix</div>
     <div class="ticket-price">
-      <div class="price-main">$195</div>
-      <div class="price-fees">+$42 fees ($237 total)</div>
-      <div class="price-markup">56% above face</div>
+      <div class="price-main">$237 total</div>
+      <div class="price-fees">$195 ticket · $42 fees (22%)</div>
+      <div class="price-markup">90% above face</div>
     </div>
     <button class="buy-btn">Buy →</button>
   </div>
@@ -306,9 +312,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
     <div class="ticket-qty">2 tix</div>
     <div class="ticket-price">
-      <div class="price-main">$210</div>
-      <div class="price-fees">+$38 fees ($248 total)</div>
-      <div class="price-markup">68% above face</div>
+      <div class="price-main">$248 total</div>
+      <div class="price-fees">$210 ticket · $38 fees (18%)</div>
+      <div class="price-markup">98% above face</div>
     </div>
     <button class="buy-btn">Buy →</button>
   </div>
@@ -324,9 +330,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
     <div class="ticket-qty">2 tix</div>
     <div class="ticket-price">
-      <div class="price-main">$225</div>
-      <div class="price-fees">+$45 fees ($270 total)</div>
-      <div class="price-markup">80% above face</div>
+      <div class="price-main">$270 total</div>
+      <div class="price-fees">$225 ticket · $45 fees (20%)</div>
+      <div class="price-markup">116% above face</div>
     </div>
     <button class="buy-btn">Buy →</button>
   </div>
@@ -342,8 +348,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
     <div class="ticket-qty">2 tix</div>
     <div class="ticket-price">
-      <div class="price-main">$189</div>
-      <div class="price-fees">All-in (no extra fees)</div>
+      <div class="price-main">$189 total</div>
+      <div class="price-fees">$189 all-in · $0 extra fees</div>
       <div class="price-markup">51% above face</div>
     </div>
     <button class="buy-btn">Buy →</button>
@@ -360,8 +366,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
     <div class="ticket-qty">2 tix</div>
     <div class="ticket-price">
-      <div class="price-main">$95</div>
-      <div class="price-fees">+$22 fees ($117 total)</div>
+      <div class="price-main">$117 total</div>
+      <div class="price-fees">$95 ticket · $22 fees (23%)</div>
       <div class="price-savings">Face value (upper)</div>
     </div>
     <button class="buy-btn">Buy →</button>

@@ -118,7 +118,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
     <div class="search-field" style="flex:.7">
       <label>Tickets</label>
-      <select>
+      <select id="ticketCount" onchange="applyTicketFilters()">
         <option>2 tickets</option>
         <option>1 ticket</option>
         <option>3 tickets</option>
@@ -203,7 +203,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 </div>
 
 <div class="results">
-  <div class="result-count">Found <strong>23 listings</strong> across 7 sources · Prices updated 2 min ago</div>
+  <div class="result-count" id="resultCount">Showing <strong>9 listings</strong> across 7 sources · Prices updated 2 min ago</div>
+  <div id="noResults" style="display:none;background:var(--card);border:1px dashed var(--border);border-radius:12px;padding:18px 20px;margin-bottom:16px;color:var(--text2);font-size:13px">
+    No listings match that ticket quantity yet. Try fewer tickets or set up an alert for new pairs/groups.
+  </div>
   <div style="background:var(--card);border-radius:10px;padding:14px 20px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap;border:1px solid var(--border);font-size:13px">
     <div><span style="color:var(--text2)">Avg Platform Fees:</span> <span style="color:var(--amber);font-weight:600">$35 (18%)</span></div>
     <div><span style="color:var(--text2)">Best Total Price:</span> <span style="color:var(--green);font-weight:600">$89 (Reddit — no fees)</span></div>
@@ -378,7 +381,32 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <script>
 function search(){
   const q=document.getElementById('eventSearch').value;
-  alert('🔍 Searching for: '+q+'\n\nThis is a demo — in production this would scrape/API all ticket sources in real-time.');
+  applyTicketFilters();
+  alert('🔍 Searching for: '+q+'\n\nThis demo now filters visible listings by requested ticket quantity before a production search would fan out to every source.');
+}
+function getRequestedTickets(){
+  const select=document.getElementById('ticketCount');
+  const match=select.value.match(/\d+/);
+  return match ? Number(match[0]) : 1;
+}
+function getListingTickets(row){
+  const qtyText=row.querySelector('.ticket-qty')?.textContent || '';
+  const match=qtyText.match(/\d+/);
+  return match ? Number(match[0]) : 0;
+}
+function applyTicketFilters(){
+  const requested=getRequestedTickets();
+  const rows=[...document.querySelectorAll('.ticket-row')];
+  let visible=0;
+
+  rows.forEach(row=>{
+    const hasEnoughTickets=getListingTickets(row)>=requested;
+    row.style.display=hasEnoughTickets ? '' : 'none';
+    if(hasEnoughTickets) visible++;
+  });
+
+  document.getElementById('resultCount').innerHTML=`Showing <strong>${visible} listing${visible===1?'':'s'}</strong> with ${requested}+ ticket${requested===1?'':'s'} · Prices updated 2 min ago`;
+  document.getElementById('noResults').style.display=visible ? 'none' : 'block';
 }
 document.querySelectorAll('.filter-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
@@ -386,6 +414,7 @@ document.querySelectorAll('.filter-btn').forEach(btn=>{
     btn.classList.add('active');
   });
 });
+applyTicketFilters();
 </script>
 
 </body>

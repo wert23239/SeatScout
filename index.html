@@ -68,6 +68,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .buy-btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;transition:background .2s}
 .buy-btn:hover{background:var(--accent2)}
 .best-badge{background:var(--green);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-left:8px}
+.safety-card{display:none;background:linear-gradient(135deg,#f59e0b18,#6366f10d);border:1px solid #f59e0b55;border-radius:12px;padding:14px 18px;margin-bottom:16px;color:var(--text);font-size:13px}
+.safety-card strong{color:#fbbf24}
+.safety-list{margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;color:var(--text2);font-size:12px}
+.safety-list span{display:inline-flex;gap:5px;align-items:center}
 
 /* Reddit/FB styling */
 .community-tag{background:#ff440020;color:#ff4500;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600}
@@ -213,6 +217,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <div><span style="color:var(--text2)">Worst Total Price:</span> <span style="color:var(--red);font-weight:600">$270 (VividSeats w/ fees)</span></div>
     <div><span style="color:var(--text2)">Face Value:</span> <span style="font-weight:600">$125 (lower bowl)</span></div>
   </div>
+  <div class="safety-card" id="communitySafety" role="status">
+    <strong>Community seller safety check:</strong> cheaper Reddit/Facebook tickets can be great, but verify before paying.
+    <div class="safety-list">
+      <span>✅ Match seller name to transfer account</span>
+      <span>🛡️ Use buyer-protected payment</span>
+      <span>🎟️ Confirm ticket transfer before marking paid</span>
+    </div>
+  </div>
 
   <div class="ticket-row best">
     <div class="ticket-source">
@@ -229,7 +241,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="price-fees">$89 ticket · $0 fees</div>
       <div class="price-savings">29% below face value</div>
     </div>
-    <button class="buy-btn">Message →</button>
+    <button class="buy-btn community-buy" onclick="showCommunitySafety()">Message →</button>
   </div>
 
   <div class="ticket-row">
@@ -247,7 +259,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="price-fees">$105 ticket · $0 fees</div>
       <div class="price-savings">16% below face</div>
     </div>
-    <button class="buy-btn">Message →</button>
+    <button class="buy-btn community-buy" onclick="showCommunitySafety()">Message →</button>
   </div>
 
   <div class="ticket-row">
@@ -265,7 +277,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="price-fees">$125 ticket · $0 fees</div>
       <div class="price-savings">At face value ✓</div>
     </div>
-    <button class="buy-btn">Message →</button>
+    <button class="buy-btn community-buy" onclick="showCommunitySafety()">Message →</button>
   </div>
 
   <div class="ticket-row">
@@ -394,6 +406,18 @@ function getListingTickets(row){
   const match=qtyText.match(/\d+/);
   return match ? Number(match[0]) : 0;
 }
+function listingIsCommunity(row){
+  return Boolean(row.querySelector('.community-tag,.fb-tag'));
+}
+function updateCommunitySafety(rows){
+  const hasVisibleCommunity=rows.some(row=>row.style.display!=='none' && listingIsCommunity(row));
+  document.getElementById('communitySafety').style.display=hasVisibleCommunity ? 'block' : 'none';
+}
+function showCommunitySafety(){
+  const card=document.getElementById('communitySafety');
+  card.style.display='block';
+  card.scrollIntoView({behavior:'smooth',block:'center'});
+}
 function applyTicketFilters(){
   const requested=getRequestedTickets();
   const rows=[...document.querySelectorAll('.ticket-row')];
@@ -407,6 +431,7 @@ function applyTicketFilters(){
 
   document.getElementById('resultCount').innerHTML=`Showing <strong>${visible} listing${visible===1?'':'s'}</strong> with ${requested}+ ticket${requested===1?'':'s'} · Prices updated 2 min ago`;
   document.getElementById('noResults').style.display=visible ? 'none' : 'block';
+  updateCommunitySafety(rows);
 }
 document.querySelectorAll('.filter-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{

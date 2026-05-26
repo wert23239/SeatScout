@@ -212,10 +212,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     No listings match that ticket quantity yet. Try fewer tickets or set up an alert for new pairs/groups.
   </div>
   <div style="background:var(--card);border-radius:10px;padding:14px 20px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap;border:1px solid var(--border);font-size:13px">
-    <div><span style="color:var(--text2)">Avg Platform Fees:</span> <span style="color:var(--amber);font-weight:600">$35 (18%)</span></div>
-    <div><span style="color:var(--text2)">Best Total Price:</span> <span style="color:var(--green);font-weight:600">$89 (Reddit — no fees)</span></div>
-    <div><span style="color:var(--text2)">Worst Total Price:</span> <span style="color:var(--red);font-weight:600">$270 (VividSeats w/ fees)</span></div>
-    <div><span style="color:var(--text2)">Face Value:</span> <span style="font-weight:600">$125 (lower bowl)</span></div>
+    <div><span style="color:var(--text2)">Avg Platform Fees:</span> <span id="avgFees" style="color:var(--amber);font-weight:600">$35 (18%)</span></div>
+    <div><span style="color:var(--text2)">Best Total Price:</span> <span id="bestTotal" style="color:var(--green);font-weight:600">$89 (Reddit — no fees)</span></div>
+    <div><span style="color:var(--text2)">Worst Total Price:</span> <span id="worstTotal" style="color:var(--red);font-weight:600">$270 (VividSeats w/ fees)</span></div>
+    <div><span style="color:var(--text2)">Face Value:</span> <span id="faceValueNote" style="font-weight:600">$125 (lower bowl)</span></div>
   </div>
   <div class="safety-card" id="communitySafety" role="status">
     <strong>Community seller safety check:</strong> cheaper Reddit/Facebook tickets can be great, but verify before paying.
@@ -409,6 +409,49 @@ function getListingTickets(row){
 function listingIsCommunity(row){
   return Boolean(row.querySelector('.community-tag,.fb-tag'));
 }
+function getSourceName(row){
+  const source=row.querySelector('.source-name')?.cloneNode(true);
+  source?.querySelectorAll('.source-icon,.best-badge').forEach(el=>el.remove());
+  return source?.textContent.trim() || 'Unknown';
+}
+function getListingTotalPrice(row){
+  const priceText=row.querySelector('.price-main')?.textContent || '';
+  const match=priceText.match(/\$([\d,]+)/);
+  return match ? Number(match[1].replace(/,/g,'')) : null;
+}
+function getListingFees(row){
+  const feeText=row.querySelector('.price-fees')?.textContent || '';
+  const match=feeText.match(/\$([\d,]+)\s*(?:fees|extra fees)/i);
+  return match ? Number(match[1].replace(/,/g,'')) : 0;
+}
+function updateDealSummary(rows){
+  const visibleRows=rows.filter(row=>row.style.display!=='none');
+  const pricedRows=visibleRows
+    .map(row=>({row,total:getListingTotalPrice(row),fees:getListingFees(row)}))
+    .filter(item=>Number.isFinite(item.total));
+  const avgFees=document.getElementById('avgFees');
+  const bestTotal=document.getElementById('bestTotal');
+  const worstTotal=document.getElementById('worstTotal');
+  const faceValueNote=document.getElementById('faceValueNote');
+
+  if(!pricedRows.length){
+    avgFees.textContent='—';
+    bestTotal.textContent='No matching listings';
+    worstTotal.textContent='No matching listings';
+    faceValueNote.textContent='Try lowering ticket count';
+    return;
+  }
+
+  const best=pricedRows.reduce((lowest,item)=>item.total<lowest.total ? item : lowest,pricedRows[0]);
+  const worst=pricedRows.reduce((highest,item)=>item.total>highest.total ? item : highest,pricedRows[0]);
+  const feeAverage=Math.round(pricedRows.reduce((sum,item)=>sum+item.fees,0)/pricedRows.length);
+  const feePercent=Math.round(pricedRows.reduce((sum,item)=>sum+(item.fees/item.total),0)/pricedRows.length*100);
+
+  avgFees.textContent=`$${feeAverage} (${feePercent}%)`;
+  bestTotal.textContent=`$${best.total} (${getSourceName(best.row)}${best.fees===0?' — no fees':''})`;
+  worstTotal.textContent=`$${worst.total} (${getSourceName(worst.row)}${worst.fees>0?' w/ fees':''})`;
+  faceValueNote.textContent=visibleRows.some(row=>row.textContent.includes('Face value')) ? '$125 visible in matches' : '$125 reference';
+}
 function updateCommunitySafety(rows){
   const hasVisibleCommunity=rows.some(row=>row.style.display!=='none' && listingIsCommunity(row));
   document.getElementById('communitySafety').style.display=hasVisibleCommunity ? 'block' : 'none';
@@ -431,6 +474,7 @@ function applyTicketFilters(){
 
   document.getElementById('resultCount').innerHTML=`Showing <strong>${visible} listing${visible===1?'':'s'}</strong> with ${requested}+ ticket${requested===1?'':'s'} · Prices updated 2 min ago`;
   document.getElementById('noResults').style.display=visible ? 'none' : 'block';
+  updateDealSummary(rows);
   updateCommunitySafety(rows);
 }
 document.querySelectorAll('.filter-btn').forEach(btn=>{

@@ -151,7 +151,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 </div>
 
 <div class="price-chart">
-  <div class="chart-card">
+  <div class="chart-card" id="priceChartCard" aria-live="polite">
     <div class="chart-title">💰 Total Price Comparison (ticket + fees)</div>
     <div class="chart-bar-row">
       <div class="chart-label">r/KendrickLamar</div>
@@ -424,6 +424,65 @@ function getListingFees(row){
   const match=feeText.match(/\$([\d,]+)\s*(?:fees|extra fees)/i);
   return match ? Number(match[1].replace(/,/g,'')) : 0;
 }
+function escapeHTML(value){
+  return String(value).replace(/[&<>'"]/g,char=>({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    "'":'&#39;',
+    '"':'&quot;'
+  }[char]));
+}
+function getChartColor(row){
+  if(row.classList.contains('best')) return 'var(--green)';
+  if(listingIsCommunity(row)) return '#22c55e99';
+  const source=getSourceName(row).toLowerCase();
+  if(source.includes('ticketmaster')) return 'var(--amber)';
+  if(source.includes('vivid')) return 'var(--red)';
+  if(source.includes('gametime')) return '#a855f7';
+  return 'var(--accent)';
+}
+function updatePriceChart(rows,requested){
+  const chart=document.getElementById('priceChartCard');
+  const visibleRows=rows.filter(row=>row.style.display!=='none');
+  const chartItems=visibleRows
+    .map(row=>({
+      label:getSourceName(row),
+      total:getListingTotalPrice(row),
+      fees:getListingFees(row),
+      note:row.textContent.includes('below face') ? 'Below face 🔥' : row.textContent.includes('Face value') ? 'Face value' : '',
+      color:getChartColor(row)
+    }))
+    .filter(item=>Number.isFinite(item.total))
+    .sort((a,b)=>a.total-b.total);
+  const maxTotal=Math.max(125,...chartItems.map(item=>item.total));
+
+  chart.innerHTML=`<div class="chart-title">💰 Total Price Comparison for ${requested}+ ticket${requested===1?'':'s'}</div>`;
+
+  if(!chartItems.length){
+    chart.insertAdjacentHTML('beforeend','<div style="color:var(--text2);font-size:13px">No matching listings to chart yet.</div>');
+    return;
+  }
+
+  chartItems.forEach(item=>{
+    const width=Math.max(12,Math.round(item.total/maxTotal*88));
+    const note=item.note || (item.fees>0 ? `incl. $${item.fees} fees` : 'no fees');
+    chart.insertAdjacentHTML('beforeend',`
+      <div class="chart-bar-row">
+        <div class="chart-label">${escapeHTML(item.label)}</div>
+        <div class="chart-bar" style="width:${width}%;background:${item.color}">$${item.total}</div>
+        <div class="chart-price">${escapeHTML(note)}</div>
+      </div>`);
+  });
+
+  const faceWidth=Math.max(12,Math.round(125/maxTotal*88));
+  chart.insertAdjacentHTML('beforeend',`
+    <div class="chart-bar-row">
+      <div class="chart-label">Face Value</div>
+      <div class="chart-bar" style="width:${faceWidth}%;background:var(--text2)">$125</div>
+      <div class="chart-price">Reference price</div>
+    </div>`);
+}
 function updateDealSummary(rows){
   const visibleRows=rows.filter(row=>row.style.display!=='none');
   const pricedRows=visibleRows
@@ -476,6 +535,7 @@ function applyTicketFilters(){
   document.getElementById('noResults').style.display=visible ? 'none' : 'block';
   updateDealSummary(rows);
   updateCommunitySafety(rows);
+  updatePriceChart(rows,requested);
 }
 document.querySelectorAll('.filter-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{

@@ -209,7 +209,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <div class="results">
   <div class="result-count" id="resultCount">Showing <strong>9 listings</strong> across 7 sources · Prices updated 2 min ago</div>
   <div id="noResults" style="display:none;background:var(--card);border:1px dashed var(--border);border-radius:12px;padding:18px 20px;margin-bottom:16px;color:var(--text2);font-size:13px">
-    No listings match that ticket quantity yet. Try fewer tickets or set up an alert for new pairs/groups.
+    No listings match that exact ticket quantity yet. Try another group size or set up an alert for new pairs/groups.
   </div>
   <div style="background:var(--card);border-radius:10px;padding:14px 20px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap;border:1px solid var(--border);font-size:13px">
     <div><span style="color:var(--text2)">Avg Platform Fees:</span> <span id="avgFees" style="color:var(--amber);font-weight:600">$35 (18%)</span></div>
@@ -457,7 +457,7 @@ function updatePriceChart(rows,requested){
     .sort((a,b)=>a.total-b.total);
   const maxTotal=Math.max(125,...chartItems.map(item=>item.total));
 
-  chart.innerHTML=`<div class="chart-title">💰 Total Price Comparison for ${requested}+ ticket${requested===1?'':'s'}</div>`;
+  chart.innerHTML=`<div class="chart-title">💰 Total Price Comparison for exactly ${requested} ticket${requested===1?'':'s'}</div>`;
 
   if(!chartItems.length){
     chart.insertAdjacentHTML('beforeend','<div style="color:var(--text2);font-size:13px">No matching listings to chart yet.</div>');
@@ -526,12 +526,12 @@ function applyTicketFilters(){
   let visible=0;
 
   rows.forEach(row=>{
-    const hasEnoughTickets=getListingTickets(row)>=requested;
-    row.style.display=hasEnoughTickets ? '' : 'none';
-    if(hasEnoughTickets) visible++;
+    const isExactTicketCount=getListingTickets(row)===requested;
+    row.style.display=isExactTicketCount ? '' : 'none';
+    if(isExactTicketCount) visible++;
   });
 
-  document.getElementById('resultCount').innerHTML=`Showing <strong>${visible} listing${visible===1?'':'s'}</strong> with ${requested}+ ticket${requested===1?'':'s'} · Prices updated 2 min ago`;
+  document.getElementById('resultCount').innerHTML=`Showing <strong>${visible} listing${visible===1?'':'s'}</strong> for exactly ${requested} ticket${requested===1?'':'s'} · Prices updated 2 min ago`;
   document.getElementById('noResults').style.display=visible ? 'none' : 'block';
   updateDealSummary(rows);
   updateCommunitySafety(rows);

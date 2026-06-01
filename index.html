@@ -401,6 +401,21 @@ function getRequestedTickets(){
   const match=select.value.match(/\d+/);
   return match ? Number(match[0]) : 1;
 }
+function setRequestedTickets(count){
+  const select=document.getElementById('ticketCount');
+  const option=[...select.options].find(opt=>Number(opt.value.match(/\d+/)?.[0])===count);
+  if(option) select.value=option.value;
+}
+function initializeTicketCountFromURL(){
+  const params=new URLSearchParams(window.location.search);
+  const count=Number(params.get('tickets'));
+  if(Number.isInteger(count) && count > 0) setRequestedTickets(count);
+}
+function syncTicketCountToURL(count){
+  const url=new URL(window.location.href);
+  url.searchParams.set('tickets',String(count));
+  window.history.replaceState({},'',url);
+}
 function getListingTickets(row){
   const qtyText=row.querySelector('.ticket-qty')?.textContent || '';
   const match=qtyText.match(/\d+/);
@@ -525,6 +540,8 @@ function applyTicketFilters(){
   const rows=[...document.querySelectorAll('.ticket-row')];
   let visible=0;
 
+  syncTicketCountToURL(requested);
+
   rows.forEach(row=>{
     const isExactTicketCount=getListingTickets(row)===requested;
     row.style.display=isExactTicketCount ? '' : 'none';
@@ -537,6 +554,7 @@ function applyTicketFilters(){
   updateCommunitySafety(rows);
   updatePriceChart(rows,requested);
 }
+initializeTicketCountFromURL();
 document.querySelectorAll('.filter-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));

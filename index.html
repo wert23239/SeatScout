@@ -62,6 +62,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .ticket-qty{font-size:12px;color:var(--text2);width:60px;text-align:center}
 .ticket-price{text-align:right;min-width:100px}
 .price-main{font-size:20px;font-weight:700}
+.price-per-ticket{font-size:11px;color:var(--accent2);font-weight:600;margin-top:1px}
 .price-fees{font-size:11px;color:var(--text2)}
 .price-savings{font-size:11px;color:var(--green);font-weight:500}
 .price-markup{font-size:11px;color:var(--red);font-weight:500}
@@ -498,6 +499,28 @@ function updatePriceChart(rows,requested){
       <div class="chart-price">Reference price</div>
     </div>`);
 }
+function updatePerTicketPrices(rows){
+  rows.forEach(row=>{
+    const total=getListingTotalPrice(row);
+    const tickets=getListingTickets(row);
+    const priceBlock=row.querySelector('.ticket-price');
+    const mainPrice=row.querySelector('.price-main');
+    let perTicket=row.querySelector('.price-per-ticket');
+
+    if(!Number.isFinite(total) || !tickets || !priceBlock || !mainPrice){
+      perTicket?.remove();
+      return;
+    }
+
+    if(!perTicket){
+      perTicket=document.createElement('div');
+      perTicket.className='price-per-ticket';
+      mainPrice.insertAdjacentElement('afterend',perTicket);
+    }
+
+    perTicket.textContent=tickets === 1 ? '1 ticket' : `$${Math.round(total/tickets)} per ticket`;
+  });
+}
 function updateDealSummary(rows){
   const visibleRows=rows.filter(row=>row.style.display!=='none');
   const pricedRows=visibleRows
@@ -574,6 +597,7 @@ function applyTicketFilters(){
   document.getElementById('resultCount').innerHTML=`Showing <strong>${visible} listing${visible===1?'':'s'}</strong> for exactly ${requested} ticket${requested===1?'':'s'} · Prices updated 2 min ago`;
   document.getElementById('noResults').style.display=visible ? 'none' : 'block';
   updateBestListing(rows);
+  updatePerTicketPrices(rows);
   updateDealSummary(rows);
   updateCommunitySafety(rows);
   updatePriceChart(rows,requested);

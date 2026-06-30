@@ -44,6 +44,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .filter-label{font-size:12px;color:var(--text2);font-weight:600}
 .filter-btn{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .2s}
 .filter-btn:hover,.filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.verified-toggle{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text2);cursor:pointer;user-select:none}
+.verified-toggle input{accent-color:var(--accent)}
 .sort-select{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text);font-family:inherit;margin-left:auto}
 
 /* Results */
@@ -199,6 +201,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   <button class="filter-btn">Lower Bowl</button>
   <button class="filter-btn">Upper Bowl</button>
   <button class="filter-btn">VIP</button>
+  <label class="verified-toggle" title="Hide Reddit and Facebook community sellers">
+    <input type="checkbox" id="verifiedOnly" onchange="applyTicketFilters()">
+    Verified only
+  </label>
   <select class="sort-select">
     <option>Sort: Price (Low → High)</option>
     <option>Sort: Price (High → Low)</option>
@@ -210,7 +216,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <div class="results">
   <div class="result-count" id="resultCount">Showing <strong>9 listings</strong> across 7 sources · Prices updated 2 min ago</div>
   <div id="noResults" style="display:none;background:var(--card);border:1px dashed var(--border);border-radius:12px;padding:18px 20px;margin-bottom:16px;color:var(--text2);font-size:13px">
-    No listings match that exact ticket quantity yet. Try another group size or set up an alert for new pairs/groups.
+    No listings match those filters yet. Try another group size, include community sellers, or set up an alert for new pairs/groups.
   </div>
   <div style="background:var(--card);border-radius:10px;padding:14px 20px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap;border:1px solid var(--border);font-size:13px">
     <div><span style="color:var(--text2)">Avg Platform Fees:</span> <span id="avgFees" style="color:var(--amber);font-weight:600">$35 (18%)</span></div>
@@ -597,17 +603,21 @@ function applyTicketFilters(){
   const rows=[...document.querySelectorAll('.ticket-row')];
   updateTicketCountOptions(rows);
   const requested=getRequestedTickets();
+  const verifiedOnly=document.getElementById('verifiedOnly')?.checked;
   let visible=0;
 
   syncTicketCountToURL(requested);
 
   rows.forEach(row=>{
     const isExactTicketCount=getListingTickets(row)===requested;
-    row.style.display=isExactTicketCount ? '' : 'none';
-    if(isExactTicketCount) visible++;
+    const passesSellerFilter=!verifiedOnly || !listingIsCommunity(row);
+    const shouldShow=isExactTicketCount && passesSellerFilter;
+    row.style.display=shouldShow ? '' : 'none';
+    if(shouldShow) visible++;
   });
 
-  document.getElementById('resultCount').innerHTML=`Showing <strong>${visible} listing${visible===1?'':'s'}</strong> for exactly ${requested} ticket${requested===1?'':'s'} · Prices updated 2 min ago`;
+  const sellerScope=verifiedOnly ? ' verified listing' : ' listing';
+  document.getElementById('resultCount').innerHTML=`Showing <strong>${visible}${sellerScope}${visible===1?'':'s'}</strong> for exactly ${requested} ticket${requested===1?'':'s'} · Prices updated 2 min ago`;
   document.getElementById('noResults').style.display=visible ? 'none' : 'block';
   updateBestListing(rows);
   updatePerTicketPrices(rows);

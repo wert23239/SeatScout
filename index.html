@@ -75,6 +75,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .safety-card strong{color:#fbbf24}
 .safety-list{margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;color:var(--text2);font-size:12px}
 .safety-list span{display:inline-flex;gap:5px;align-items:center}
+.empty-action{margin-top:12px;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.empty-action:hover{background:var(--accent2)}
 
 /* Reddit/FB styling */
 .community-tag{background:#ff440020;color:#ff4500;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600}
@@ -216,7 +218,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <div class="results">
   <div class="result-count" id="resultCount">Showing <strong>9 listings</strong> across 7 sources · Prices updated 2 min ago</div>
   <div id="noResults" style="display:none;background:var(--card);border:1px dashed var(--border);border-radius:12px;padding:18px 20px;margin-bottom:16px;color:var(--text2);font-size:13px">
-    No listings match those filters yet. Try another group size, include community sellers, or set up an alert for new pairs/groups.
+    <div>No listings match those filters yet. Try another group size, include community sellers, or set up an alert for new pairs/groups.</div>
+    <button class="empty-action" type="button" onclick="showAvailableListings()">Show available listings</button>
   </div>
   <div style="background:var(--card);border-radius:10px;padding:14px 20px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap;border:1px solid var(--border);font-size:13px">
     <div><span style="color:var(--text2)">Avg Platform Fees:</span> <span id="avgFees" style="color:var(--amber);font-weight:600">$35 (18%)</span></div>
@@ -598,6 +601,20 @@ function showCommunitySafety(){
   const card=document.getElementById('communitySafety');
   card.style.display='block';
   card.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function getMostAvailableTicketCount(rows){
+  const counts=rows.reduce((acc,row)=>{
+    const count=getListingTickets(row);
+    if(count) acc.set(count,(acc.get(count) || 0) + 1);
+    return acc;
+  },new Map());
+  return [...counts.entries()].sort((a,b)=>b[1]-a[1] || a[0]-b[0])[0]?.[0] || 2;
+}
+function showAvailableListings(){
+  const rows=[...document.querySelectorAll('.ticket-row')];
+  document.getElementById('verifiedOnly').checked=false;
+  setRequestedTickets(getMostAvailableTicketCount(rows));
+  applyTicketFilters();
 }
 function applyTicketFilters(){
   const rows=[...document.querySelectorAll('.ticket-row')];

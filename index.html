@@ -433,9 +433,21 @@ function initializeTicketCountFromURL(){
   const count=Number(params.get('tickets'));
   if(Number.isInteger(count) && count > 0) setRequestedTickets(count);
 }
-function syncTicketCountToURL(count){
+function initializeVerifiedOnlyFromURL(){
+  const params=new URLSearchParams(window.location.search);
+  const verified=params.get('verified');
+  if(verified === '1' || verified === 'true'){
+    document.getElementById('verifiedOnly').checked=true;
+  }
+}
+function syncFiltersToURL(count,verifiedOnly){
   const url=new URL(window.location.href);
   url.searchParams.set('tickets',String(count));
+  if(verifiedOnly){
+    url.searchParams.set('verified','1');
+  }else{
+    url.searchParams.delete('verified');
+  }
   window.history.replaceState({},'',url);
 }
 function getListingTickets(row){
@@ -623,7 +635,7 @@ function applyTicketFilters(){
   const verifiedOnly=document.getElementById('verifiedOnly')?.checked;
   let visible=0;
 
-  syncTicketCountToURL(requested);
+  syncFiltersToURL(requested,verifiedOnly);
 
   rows.forEach(row=>{
     const isExactTicketCount=getListingTickets(row)===requested;
@@ -643,6 +655,7 @@ function applyTicketFilters(){
   updatePriceChart(rows,requested);
 }
 initializeTicketCountFromURL();
+initializeVerifiedOnlyFromURL();
 document.querySelectorAll('.filter-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));

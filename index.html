@@ -47,6 +47,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .verified-toggle{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text2);cursor:pointer;user-select:none}
 .verified-toggle input{accent-color:var(--accent)}
 .sort-select{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text);font-family:inherit;margin-left:auto}
+.share-filter-btn{background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text2);font-family:inherit;cursor:pointer;transition:all .2s}
+.share-filter-btn:hover{border-color:var(--accent);color:var(--text)}
 
 /* Results */
 .results{max-width:900px;margin:16px auto;padding:0 24px 60px}
@@ -207,6 +209,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <input type="checkbox" id="verifiedOnly" onchange="applyTicketFilters()">
     Verified only
   </label>
+  <button class="share-filter-btn" id="shareFilters" type="button" onclick="copyCurrentSearchLink()">Copy search link</button>
   <select class="sort-select">
     <option>Sort: Price (Low → High)</option>
     <option>Sort: Price (High → Low)</option>
@@ -449,6 +452,42 @@ function syncFiltersToURL(count,verifiedOnly){
     url.searchParams.delete('verified');
   }
   window.history.replaceState({},'',url);
+}
+async function copyText(text){
+  if(navigator.clipboard?.writeText){
+    try{
+      await navigator.clipboard.writeText(text);
+      return;
+    }catch{}
+  }
+
+  const textarea=document.createElement('textarea');
+  textarea.value=text;
+  textarea.setAttribute('readonly','');
+  textarea.style.position='fixed';
+  textarea.style.left='-9999px';
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  try{
+    if(!document.execCommand('copy')) throw new Error('copy failed');
+  }finally{
+    document.body.removeChild(textarea);
+  }
+}
+async function copyCurrentSearchLink(){
+  applyTicketFilters();
+  const button=document.getElementById('shareFilters');
+  const original=button.textContent;
+
+  try{
+    await copyText(window.location.href);
+    button.textContent='Copied link';
+  }catch{
+    button.textContent='Copy failed';
+  }
+
+  window.setTimeout(()=>{ button.textContent=original; },2000);
 }
 function getListingTickets(row){
   const qtyText=row.querySelector('.ticket-qty')?.textContent || '';

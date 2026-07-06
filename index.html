@@ -419,13 +419,14 @@ function setRequestedTickets(count){
   const option=[...select.options].find(opt=>Number(opt.value.match(/\d+/)?.[0])===count);
   if(option) select.value=option.value;
 }
-function updateTicketCountOptions(rows){
+function updateTicketCountOptions(rows,verifiedOnly=false){
   const select=document.getElementById('ticketCount');
   const selectedCount=getRequestedTickets();
+  const countableRows=verifiedOnly ? rows.filter(row=>!listingIsCommunity(row)) : rows;
   [...select.options].forEach(option=>{
     const count=Number(option.value.match(/\d+/)?.[0]);
     if(!Number.isFinite(count)) return;
-    const matches=rows.filter(row=>getListingTickets(row)===count).length;
+    const matches=countableRows.filter(row=>getListingTickets(row)===count).length;
     option.value=`${count} ticket${count===1?'':'s'}`;
     option.textContent=`${count} ticket${count===1?'':'s'} (${matches} listing${matches===1?'':'s'})`;
   });
@@ -669,9 +670,9 @@ function showAvailableListings(){
 }
 function applyTicketFilters(){
   const rows=[...document.querySelectorAll('.ticket-row')];
-  updateTicketCountOptions(rows);
-  const requested=getRequestedTickets();
   const verifiedOnly=document.getElementById('verifiedOnly')?.checked;
+  updateTicketCountOptions(rows,verifiedOnly);
+  const requested=getRequestedTickets();
   let visible=0;
 
   syncFiltersToURL(requested,verifiedOnly);

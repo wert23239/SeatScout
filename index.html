@@ -46,6 +46,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .filter-btn:hover,.filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .verified-toggle{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text2);cursor:pointer;user-select:none}
 .verified-toggle input{accent-color:var(--accent)}
+.price-filter{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--text2)}
+.price-filter input{width:74px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font:inherit;font-size:12px}
+.price-filter input:focus{outline:none;border-color:var(--accent)}
 .sort-select{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text);font-family:inherit;margin-left:auto}
 .share-filter-btn{background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text2);font-family:inherit;cursor:pointer;transition:all .2s}
 .share-filter-btn:hover{border-color:var(--accent);color:var(--text)}
@@ -208,6 +211,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   <label class="verified-toggle" title="Hide Reddit and Facebook community sellers">
     <input type="checkbox" id="verifiedOnly" onchange="applyTicketFilters()">
     Verified only
+  </label>
+  <label class="price-filter" title="Hide listings above this all-in total">
+    Max $
+    <input type="number" id="maxPrice" min="1" inputmode="numeric" placeholder="Any" oninput="applyTicketFilters()" aria-label="Maximum total price">
   </label>
   <button class="share-filter-btn" id="shareFilters" type="button" onclick="copyCurrentSearchLink()">Copy search link</button>
   <select class="sort-select">
@@ -444,13 +451,29 @@ function initializeVerifiedOnlyFromURL(){
     document.getElementById('verifiedOnly').checked=true;
   }
 }
-function syncFiltersToURL(count,verifiedOnly){
+function initializeMaxPriceFromURL(){
+  const params=new URLSearchParams(window.location.search);
+  const maxPrice=Number(params.get('max'));
+  if(Number.isFinite(maxPrice) && maxPrice > 0){
+    document.getElementById('maxPrice').value=String(Math.round(maxPrice));
+  }
+}
+function getMaxPrice(){
+  const value=Number(document.getElementById('maxPrice')?.value);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+function syncFiltersToURL(count,verifiedOnly,maxPrice){
   const url=new URL(window.location.href);
   url.searchParams.set('tickets',String(count));
   if(verifiedOnly){
     url.searchParams.set('verified','1');
   }else{
     url.searchParams.delete('verified');
+  }
+  if(maxPrice){
+    url.searchParams.set('max',String(Math.round(maxPrice)));
+  }else{
+    url.searchParams.delete('max');
   }
   window.history.replaceState({},'',url);
 }
@@ -665,28 +688,33 @@ function getMostAvailableTicketCount(rows){
 function showAvailableListings(){
   const rows=[...document.querySelectorAll('.ticket-row')];
   document.getElementById('verifiedOnly').checked=false;
+  document.getElementById('maxPrice').value='';
   setRequestedTickets(getMostAvailableTicketCount(rows));
   applyTicketFilters();
 }
 function applyTicketFilters(){
   const rows=[...document.querySelectorAll('.ticket-row')];
   const verifiedOnly=document.getElementById('verifiedOnly')?.checked;
+  const maxPrice=getMaxPrice();
   updateTicketCountOptions(rows,verifiedOnly);
   const requested=getRequestedTickets();
   let visible=0;
 
-  syncFiltersToURL(requested,verifiedOnly);
+  syncFiltersToURL(requested,verifiedOnly,maxPrice);
 
   rows.forEach(row=>{
     const isExactTicketCount=getListingTickets(row)===requested;
     const passesSellerFilter=!verifiedOnly || !listingIsCommunity(row);
-    const shouldShow=isExactTicketCount && passesSellerFilter;
+    const total=getListingTotalPrice(row);
+    const passesPriceFilter=!maxPrice || (Number.isFinite(total) && total <= maxPrice);
+    const shouldShow=isExactTicketCount && passesSellerFilter && passesPriceFilter;
     row.style.display=shouldShow ? '' : 'none';
     if(shouldShow) visible++;
   });
 
   const sellerScope=verifiedOnly ? ' verified listing' : ' listing';
-  document.getElementById('resultCount').innerHTML=`Showing <strong>${visible}${sellerScope}${visible===1?'':'s'}</strong> for exactly ${requested} ticket${requested===1?'':'s'} · Prices updated 2 min ago`;
+  const priceScope=maxPrice ? ` under $${Math.round(maxPrice)}` : '';
+  document.getElementById('resultCount').innerHTML=`Showing <strong>${visible}${sellerScope}${visible===1?'':'s'}</strong> for exactly ${requested} ticket${requested===1?'':'s'}${priceScope} · Prices updated 2 min ago`;
   document.getElementById('noResults').style.display=visible ? 'none' : 'block';
   updateBestListing(rows);
   updatePerTicketPrices(rows);
@@ -696,6 +724,7 @@ function applyTicketFilters(){
 }
 initializeTicketCountFromURL();
 initializeVerifiedOnlyFromURL();
+initializeMaxPriceFromURL();
 document.querySelectorAll('.filter-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));

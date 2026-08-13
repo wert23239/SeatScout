@@ -52,6 +52,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .sort-select{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text);font-family:inherit;margin-left:auto}
 .share-filter-btn{background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text2);font-family:inherit;cursor:pointer;transition:all .2s}
 .share-filter-btn:hover{border-color:var(--accent);color:var(--text)}
+.clear-filter-btn{display:none;background:transparent;border:none;padding:6px 4px;font-size:12px;color:var(--text2);font-family:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.clear-filter-btn:hover{color:var(--text)}
 
 /* Results */
 .results{max-width:900px;margin:16px auto;padding:0 24px 60px}
@@ -217,6 +219,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <input type="number" id="maxPrice" min="1" inputmode="numeric" placeholder="Any" oninput="applyTicketFilters()" aria-label="Maximum total price">
   </label>
   <button class="share-filter-btn" id="shareFilters" type="button" onclick="copyCurrentSearchLink()">Copy search link</button>
+  <button class="clear-filter-btn" id="clearFilters" type="button" onclick="clearTicketFilters()">Clear filters</button>
   <select class="sort-select">
     <option>Sort: Price (Low → High)</option>
     <option>Sort: Price (High → Low)</option>
@@ -477,6 +480,16 @@ function syncFiltersToURL(count,verifiedOnly,maxPrice){
   }
   window.history.replaceState({},'',url);
 }
+function updateClearFiltersVisibility(count,verifiedOnly,maxPrice){
+  const hasActiveFilters=count !== 2 || Boolean(verifiedOnly) || Boolean(maxPrice);
+  document.getElementById('clearFilters').style.display=hasActiveFilters ? 'inline-block' : 'none';
+}
+function clearTicketFilters(){
+  document.getElementById('verifiedOnly').checked=false;
+  document.getElementById('maxPrice').value='';
+  setRequestedTickets(2);
+  applyTicketFilters();
+}
 async function copyText(text){
   if(navigator.clipboard?.writeText){
     try{
@@ -716,6 +729,7 @@ function applyTicketFilters(){
   const priceScope=maxPrice ? ` under $${Math.round(maxPrice)}` : '';
   document.getElementById('resultCount').innerHTML=`Showing <strong>${visible}${sellerScope}${visible===1?'':'s'}</strong> for exactly ${requested} ticket${requested===1?'':'s'}${priceScope} · Prices updated 2 min ago`;
   document.getElementById('noResults').style.display=visible ? 'none' : 'block';
+  updateClearFiltersVisibility(requested,verifiedOnly,maxPrice);
   updateBestListing(rows);
   updatePerTicketPrices(rows);
   updateDealSummary(rows);

@@ -84,6 +84,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .safety-list span{display:inline-flex;gap:5px;align-items:center}
 .empty-action{margin-top:12px;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer}
 .empty-action:hover{background:var(--accent2)}
+.alert-action{margin-top:12px;margin-left:8px;background:transparent;color:var(--accent2);border:1px solid var(--accent);border-radius:8px;padding:8px 13px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.alert-action:hover{background:#6366f120;color:var(--text)}
+.alert-status{display:none;margin-top:10px;color:var(--green);font-size:12px}
 
 /* Reddit/FB styling */
 .community-tag{background:#ff440020;color:#ff4500;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600}
@@ -233,6 +236,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   <div id="noResults" style="display:none;background:var(--card);border:1px dashed var(--border);border-radius:12px;padding:18px 20px;margin-bottom:16px;color:var(--text2);font-size:13px">
     <div>No listings match those filters yet. Try another group size, include community sellers, or set up an alert for new pairs/groups.</div>
     <button class="empty-action" type="button" onclick="showAvailableListings()">Show available listings</button>
+    <button class="alert-action" type="button" onclick="savePriceAlert()">Save alert for these filters</button>
+    <div class="alert-status" id="alertStatus" role="status" aria-live="polite"></div>
   </div>
   <div style="background:var(--card);border-radius:10px;padding:14px 20px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap;border:1px solid var(--border);font-size:13px">
     <div><span style="color:var(--text2)">Avg Platform Fees:</span> <span id="avgFees" style="color:var(--amber);font-weight:600">$35 (18%)</span></div>
@@ -712,6 +717,33 @@ function showAvailableListings(){
   document.getElementById('maxPrice').value='';
   setRequestedTickets(getMostAvailableTicketCount(rows));
   applyTicketFilters();
+}
+function savePriceAlert(){
+  const alertStatus=document.getElementById('alertStatus');
+  const alert={
+    event:document.getElementById('eventSearch')?.value || 'Current event',
+    tickets:getRequestedTickets(),
+    verifiedOnly:Boolean(document.getElementById('verifiedOnly')?.checked),
+    maxPrice:getMaxPrice(),
+    createdAt:new Date().toISOString()
+  };
+
+  try{
+    const key='seatscout-price-alerts';
+    const existing=JSON.parse(localStorage.getItem(key) || '[]');
+    const withoutDuplicate=existing.filter(item=>!(
+      item.event===alert.event &&
+      item.tickets===alert.tickets &&
+      item.verifiedOnly===alert.verifiedOnly &&
+      item.maxPrice===alert.maxPrice
+    ));
+    localStorage.setItem(key,JSON.stringify([alert,...withoutDuplicate].slice(0,10)));
+    alertStatus.textContent=`Alert saved for ${alert.tickets} ticket${alert.tickets===1?'':'s'}${alert.verifiedOnly?' from verified sellers':''}${alert.maxPrice?` under $${Math.round(alert.maxPrice)}`:''}.`;
+  }catch{
+    alertStatus.textContent='Alert saved for this browser session.';
+  }
+
+  alertStatus.style.display='block';
 }
 function applyTicketFilters(){
   const rows=[...document.querySelectorAll('.ticket-row')];

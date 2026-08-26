@@ -54,6 +54,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .share-filter-btn:hover{border-color:var(--accent);color:var(--text)}
 .clear-filter-btn{display:none;background:transparent;border:none;padding:6px 4px;font-size:12px;color:var(--text2);font-family:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .clear-filter-btn:hover{color:var(--text)}
+.saved-alerts{display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:16px;color:var(--text2);font-size:13px}
+.saved-alerts h2{font-size:13px;color:var(--text);margin-bottom:10px}
+.saved-alert{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid var(--border);padding:10px 0}
+.saved-alert:first-of-type{border-top:none}
+.saved-alert strong{color:var(--text)}
+.saved-alert button{background:none;border:none;color:var(--red);cursor:pointer;font:inherit;font-size:12px;text-decoration:underline;text-underline-offset:3px}
 
 /* Results */
 .results{max-width:900px;margin:16px auto;padding:0 24px 60px}
@@ -222,6 +228,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <input type="number" id="maxPrice" min="1" inputmode="numeric" placeholder="Any" oninput="applyTicketFilters()" aria-label="Maximum total price">
   </label>
   <button class="share-filter-btn" id="shareFilters" type="button" onclick="copyCurrentSearchLink()">Copy search link</button>
+  <button class="share-filter-btn" id="savedAlertsToggle" type="button" onclick="toggleSavedAlerts()">Saved alerts</button>
   <button class="clear-filter-btn" id="clearFilters" type="button" onclick="clearTicketFilters()">Clear filters</button>
   <select class="sort-select">
     <option>Sort: Price (Low → High)</option>
@@ -233,6 +240,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 <div class="results">
   <div class="result-count" id="resultCount">Showing <strong>9 listings</strong> across 7 sources · Prices updated 2 min ago</div>
+  <div class="saved-alerts" id="savedAlerts" aria-live="polite"></div>
   <div id="noResults" style="display:none;background:var(--card);border:1px dashed var(--border);border-radius:12px;padding:18px 20px;margin-bottom:16px;color:var(--text2);font-size:13px">
     <div>No listings match those filters yet. Try another group size, include community sellers, or set up an alert for new pairs/groups.</div>
     <button class="empty-action" type="button" onclick="showAvailableListings()">Show available listings</button>
@@ -739,11 +747,58 @@ function savePriceAlert(){
     ));
     localStorage.setItem(key,JSON.stringify([alert,...withoutDuplicate].slice(0,10)));
     alertStatus.textContent=`Alert saved for ${alert.tickets} ticket${alert.tickets===1?'':'s'}${alert.verifiedOnly?' from verified sellers':''}${alert.maxPrice?` under $${Math.round(alert.maxPrice)}`:''}.`;
+    renderSavedAlerts();
   }catch{
     alertStatus.textContent='Alert saved for this browser session.';
   }
 
   alertStatus.style.display='block';
+}
+function getSavedAlerts(){
+  try{
+    return JSON.parse(localStorage.getItem('seatscout-price-alerts') || '[]');
+  }catch{
+    return [];
+  }
+}
+function formatAlert(alert){
+  const parts=[
+    `${alert.tickets || 1} ticket${alert.tickets===1?'':'s'}`,
+    alert.verifiedOnly ? 'verified sellers' : 'all sellers',
+    alert.maxPrice ? `max $${Math.round(alert.maxPrice)}` : 'any price'
+  ];
+  return `${alert.event || 'Current event'} · ${parts.join(' · ')}`;
+}
+function renderSavedAlerts(){
+  const panel=document.getElementById('savedAlerts');
+  const toggle=document.getElementById('savedAlertsToggle');
+  if(!panel || !toggle) return;
+
+  const alerts=getSavedAlerts();
+  toggle.textContent=`Saved alerts${alerts.length ? ` (${alerts.length})` : ''}`;
+  if(panel.style.display !== 'block') return;
+
+  if(!alerts.length){
+    panel.innerHTML='<h2>Saved alerts</h2><div>No saved alerts yet.</div>';
+    return;
+  }
+
+  panel.innerHTML=`<h2>Saved alerts</h2>${alerts.map((alert,index)=>`
+    <div class="saved-alert">
+      <div><strong>${escapeHTML(formatAlert(alert))}</strong><br>Saved ${escapeHTML(new Date(alert.createdAt || Date.now()).toLocaleString())}</div>
+      <button type="button" onclick="removeSavedAlert(${index})">Remove</button>
+    </div>`).join('')}`;
+}
+function toggleSavedAlerts(){
+  const panel=document.getElementById('savedAlerts');
+  panel.style.display=panel.style.display === 'block' ? 'none' : 'block';
+  renderSavedAlerts();
+}
+function removeSavedAlert(index){
+  const alerts=getSavedAlerts();
+  alerts.splice(index,1);
+  localStorage.setItem('seatscout-price-alerts',JSON.stringify(alerts));
+  renderSavedAlerts();
 }
 function applyTicketFilters(){
   const rows=[...document.querySelectorAll('.ticket-row')];
@@ -779,6 +834,7 @@ function applyTicketFilters(){
 initializeTicketCountFromURL();
 initializeVerifiedOnlyFromURL();
 initializeMaxPriceFromURL();
+renderSavedAlerts();
 document.querySelectorAll('.filter-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));

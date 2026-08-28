@@ -59,7 +59,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .saved-alert{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid var(--border);padding:10px 0}
 .saved-alert:first-of-type{border-top:none}
 .saved-alert strong{color:var(--text)}
-.saved-alert button{background:none;border:none;color:var(--red);cursor:pointer;font:inherit;font-size:12px;text-decoration:underline;text-underline-offset:3px}
+.saved-alert-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.saved-alert button{background:none;border:none;cursor:pointer;font:inherit;font-size:12px;text-decoration:underline;text-underline-offset:3px}
+.saved-alert .apply-alert{color:var(--accent2)}
+.saved-alert .remove-alert{color:var(--red)}
 
 /* Results */
 .results{max-width:900px;margin:16px auto;padding:0 24px 60px}
@@ -786,13 +789,26 @@ function renderSavedAlerts(){
   panel.innerHTML=`<h2>Saved alerts</h2>${alerts.map((alert,index)=>`
     <div class="saved-alert">
       <div><strong>${escapeHTML(formatAlert(alert))}</strong><br>Saved ${escapeHTML(new Date(alert.createdAt || Date.now()).toLocaleString())}</div>
-      <button type="button" onclick="removeSavedAlert(${index})">Remove</button>
+      <div class="saved-alert-actions">
+        <button class="apply-alert" type="button" onclick="applySavedAlert(${index})">Apply</button>
+        <button class="remove-alert" type="button" onclick="removeSavedAlert(${index})">Remove</button>
+      </div>
     </div>`).join('')}`;
 }
 function toggleSavedAlerts(){
   const panel=document.getElementById('savedAlerts');
   panel.style.display=panel.style.display === 'block' ? 'none' : 'block';
   renderSavedAlerts();
+}
+function applySavedAlert(index){
+  const alert=getSavedAlerts()[index];
+  if(!alert) return;
+
+  setRequestedTickets(Number(alert.tickets) || 2);
+  document.getElementById('verifiedOnly').checked=Boolean(alert.verifiedOnly);
+  document.getElementById('maxPrice').value=alert.maxPrice ? String(Math.round(alert.maxPrice)) : '';
+  applyTicketFilters();
+  document.getElementById('savedAlerts').style.display='none';
 }
 function removeSavedAlert(index){
   const alerts=getSavedAlerts();

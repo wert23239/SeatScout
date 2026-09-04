@@ -144,7 +144,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
     <div class="search-field">
       <label>City</label>
-      <input type="text" value="New York, NY">
+      <input type="text" value="New York, NY" id="citySearch">
     </div>
     <div class="search-field" style="flex:.7">
       <label>Tickets</label>
@@ -480,12 +480,29 @@ function initializeMaxPriceFromURL(){
     document.getElementById('maxPrice').value=String(Math.round(maxPrice));
   }
 }
+function initializeSearchFieldsFromURL(){
+  const params=new URLSearchParams(window.location.search);
+  const event=params.get('event');
+  const city=params.get('city');
+  if(event) document.getElementById('eventSearch').value=event;
+  if(city) document.getElementById('citySearch').value=city;
+}
+function syncSearchParam(url,key,value,defaultValue){
+  const cleanValue=String(value || '').replace(/\s+/g,' ').trim();
+  if(cleanValue && cleanValue !== defaultValue){
+    url.searchParams.set(key,cleanValue);
+  }else{
+    url.searchParams.delete(key);
+  }
+}
 function getMaxPrice(){
   const value=Number(document.getElementById('maxPrice')?.value);
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 function syncFiltersToURL(count,verifiedOnly,maxPrice){
   const url=new URL(window.location.href);
+  syncSearchParam(url,'event',document.getElementById('eventSearch')?.value,'Kendrick Lamar — Grand National Tour');
+  syncSearchParam(url,'city',document.getElementById('citySearch')?.value,'New York, NY');
   url.searchParams.set('tickets',String(count));
   if(verifiedOnly){
     url.searchParams.set('verified','1');
@@ -874,6 +891,7 @@ function applyTicketFilters(){
 initializeTicketCountFromURL();
 initializeVerifiedOnlyFromURL();
 initializeMaxPriceFromURL();
+initializeSearchFieldsFromURL();
 renderSavedAlerts();
 document.querySelectorAll('.filter-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{

@@ -752,6 +752,7 @@ function savePriceAlert(){
   const alertStatus=document.getElementById('alertStatus');
   const alert={
     event:document.getElementById('eventSearch')?.value || 'Current event',
+    city:document.getElementById('citySearch')?.value || 'Current city',
     tickets:getRequestedTickets(),
     verifiedOnly:Boolean(document.getElementById('verifiedOnly')?.checked),
     maxPrice:getMaxPrice(),
@@ -763,6 +764,7 @@ function savePriceAlert(){
     const existing=JSON.parse(localStorage.getItem(key) || '[]');
     const withoutDuplicate=existing.filter(item=>!(
       item.event===alert.event &&
+      item.city===alert.city &&
       item.tickets===alert.tickets &&
       item.verifiedOnly===alert.verifiedOnly &&
       item.maxPrice===alert.maxPrice
@@ -785,6 +787,7 @@ function getSavedAlerts(){
 }
 function formatAlert(alert){
   const parts=[
+    alert.city || 'Current city',
     `${alert.tickets || 1} ticket${alert.tickets===1?'':'s'}`,
     alert.verifiedOnly ? 'verified sellers' : 'all sellers',
     alert.maxPrice ? `max $${Math.round(alert.maxPrice)}` : 'any price'
@@ -845,6 +848,8 @@ function applySavedAlert(index){
   if(!alert) return;
 
   setRequestedTickets(Number(alert.tickets) || 2);
+  if(alert.event) document.getElementById('eventSearch').value=alert.event;
+  if(alert.city) document.getElementById('citySearch').value=alert.city;
   document.getElementById('verifiedOnly').checked=Boolean(alert.verifiedOnly);
   document.getElementById('maxPrice').value=alert.maxPrice ? String(Math.round(alert.maxPrice)) : '';
   applyTicketFilters();

@@ -761,7 +761,7 @@ function savePriceAlert(){
 
   try{
     const key='seatscout-price-alerts';
-    const existing=JSON.parse(localStorage.getItem(key) || '[]');
+    const existing=getSavedAlerts();
     const withoutDuplicate=existing.filter(item=>!(
       item.event===alert.event &&
       item.city===alert.city &&
@@ -780,7 +780,9 @@ function savePriceAlert(){
 }
 function getSavedAlerts(){
   try{
-    return JSON.parse(localStorage.getItem('seatscout-price-alerts') || '[]');
+    const alerts=JSON.parse(localStorage.getItem('seatscout-price-alerts') || '[]');
+    if(!Array.isArray(alerts)) return [];
+    return alerts.filter(alert=>alert && typeof alert === 'object');
   }catch{
     return [];
   }

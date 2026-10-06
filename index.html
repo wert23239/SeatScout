@@ -228,6 +228,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <input type="checkbox" id="verifiedOnly" onchange="applyTicketFilters()">
     Verified only
   </label>
+  <label class="verified-toggle" title="Show listings with no added service fees">
+    <input type="checkbox" id="noFeeOnly" onchange="applyTicketFilters()">
+    No extra fees
+  </label>
   <label class="price-filter" title="Hide listings above this all-in total">
     Max $
     <input type="number" id="maxPrice" min="1" inputmode="numeric" placeholder="Any" oninput="applyTicketFilters()" aria-label="Maximum total price">
@@ -448,10 +452,13 @@ function setRequestedTickets(count){
   const option=[...select.options].find(opt=>Number(opt.value.match(/\d+/)?.[0])===count);
   if(option) select.value=option.value;
 }
-function updateTicketCountOptions(rows,verifiedOnly=false){
+function updateTicketCountOptions(rows,verifiedOnly=false,noFeeOnly=false){
   const select=document.getElementById('ticketCount');
   const selectedCount=getRequestedTickets();
-  const countableRows=verifiedOnly ? rows.filter(row=>!listingIsCommunity(row)) : rows;
+  const countableRows=rows.filter(row=>
+    (!verifiedOnly || !listingIsCommunity(row)) &&
+    (!noFeeOnly || getListingFees(row) === 0)
+  );
   [...select.options].forEach(option=>{
     const count=Number(option.value.match(/\d+/)?.[0]);
     if(!Number.isFinite(count)) return;
@@ -471,6 +478,13 @@ function initializeVerifiedOnlyFromURL(){
   const verified=params.get('verified');
   if(verified === '1' || verified === 'true'){
     document.getElementById('verifiedOnly').checked=true;
+  }
+}
+function initializeNoFeeOnlyFromURL(){
+  const params=new URLSearchParams(window.location.search);
+  const noFees=params.get('nofees');
+  if(noFees === '1' || noFees === 'true'){
+    document.getElementById('noFeeOnly').checked=true;
   }
 }
 function initializeMaxPriceFromURL(){
@@ -499,7 +513,7 @@ function getMaxPrice(){
   const value=Number(document.getElementById('maxPrice')?.value);
   return Number.isFinite(value) && value > 0 ? value : null;
 }
-function syncFiltersToURL(count,verifiedOnly,maxPrice){
+function syncFiltersToURL(count,verifiedOnly,maxPrice,noFeeOnly){
   const url=new URL(window.location.href);
   syncSearchParam(url,'event',document.getElementById('eventSearch')?.value,'Kendrick Lamar — Grand National Tour');
   syncSearchParam(url,'city',document.getElementById('citySearch')?.value,'New York, NY');
@@ -514,14 +528,20 @@ function syncFiltersToURL(count,verifiedOnly,maxPrice){
   }else{
     url.searchParams.delete('max');
   }
+  if(noFeeOnly){
+    url.searchParams.set('nofees','1');
+  }else{
+    url.searchParams.delete('nofees');
+  }
   window.history.replaceState({},'',url);
 }
-function updateClearFiltersVisibility(count,verifiedOnly,maxPrice){
-  const hasActiveFilters=count !== 2 || Boolean(verifiedOnly) || Boolean(maxPrice);
+function updateClearFiltersVisibility(count,verifiedOnly,maxPrice,noFeeOnly){
+  const hasActiveFilters=count !== 2 || Boolean(verifiedOnly) || Boolean(maxPrice) || Boolean(noFeeOnly);
   document.getElementById('clearFilters').style.display=hasActiveFilters ? 'inline-block' : 'none';
 }
 function clearTicketFilters(){
   document.getElementById('verifiedOnly').checked=false;
+  document.getElementById('noFeeOnly').checked=false;
   document.getElementById('maxPrice').value='';
   setRequestedTickets(2);
   applyTicketFilters();
@@ -744,6 +764,7 @@ function getMostAvailableTicketCount(rows){
 function showAvailableListings(){
   const rows=[...document.querySelectorAll('.ticket-row')];
   document.getElementById('verifiedOnly').checked=false;
+  document.getElementById('noFeeOnly').checked=false;
   document.getElementById('maxPrice').value='';
   setRequestedTickets(getMostAvailableTicketCount(rows));
   applyTicketFilters();
@@ -755,6 +776,7 @@ function savePriceAlert(){
     city:document.getElementById('citySearch')?.value || 'Current city',
     tickets:getRequestedTickets(),
     verifiedOnly:Boolean(document.getElementById('verifiedOnly')?.checked),
+    noFeeOnly:Boolean(document.getElementById('noFeeOnly')?.checked),
     maxPrice:getMaxPrice(),
     createdAt:new Date().toISOString()
   };
@@ -767,10 +789,11 @@ function savePriceAlert(){
       item.city===alert.city &&
       item.tickets===alert.tickets &&
       item.verifiedOnly===alert.verifiedOnly &&
+      Boolean(item.noFeeOnly)===alert.noFeeOnly &&
       item.maxPrice===alert.maxPrice
     ));
     localStorage.setItem(key,JSON.stringify([alert,...withoutDuplicate].slice(0,10)));
-    alertStatus.textContent=`Alert saved for ${alert.tickets} ticket${alert.tickets===1?'':'s'}${alert.verifiedOnly?' from verified sellers':''}${alert.maxPrice?` under $${Math.round(alert.maxPrice)}`:''}.`;
+    alertStatus.textContent=`Alert saved for ${alert.tickets} ticket${alert.tickets===1?'':'s'}${alert.verifiedOnly?' from verified sellers':''}${alert.noFeeOnly?' with no extra fees':''}${alert.maxPrice?` under $${Math.round(alert.maxPrice)}`:''}.`;
     renderSavedAlerts();
   }catch{
     alertStatus.textContent='Alert saved for this browser session.';
@@ -792,6 +815,7 @@ function formatAlert(alert){
     alert.city || 'Current city',
     `${alert.tickets || 1} ticket${alert.tickets===1?'':'s'}`,
     alert.verifiedOnly ? 'verified sellers' : 'all sellers',
+    alert.noFeeOnly ? 'no extra fees' : 'any fees',
     alert.maxPrice ? `max $${Math.round(alert.maxPrice)}` : 'any price'
   ];
   return `${alert.event || 'Current event'} · ${parts.join(' · ')}`;
@@ -801,6 +825,7 @@ function countAlertMatches(alert){
     const total=getListingTotalPrice(row);
     return getListingTickets(row)===(Number(alert.tickets) || 1) &&
       (!alert.verifiedOnly || !listingIsCommunity(row)) &&
+      (!alert.noFeeOnly || getListingFees(row) === 0) &&
       (!alert.maxPrice || (Number.isFinite(total) && total <= Number(alert.maxPrice)));
   }).length;
 }
@@ -853,6 +878,7 @@ function applySavedAlert(index){
   if(alert.event) document.getElementById('eventSearch').value=alert.event;
   if(alert.city) document.getElementById('citySearch').value=alert.city;
   document.getElementById('verifiedOnly').checked=Boolean(alert.verifiedOnly);
+  document.getElementById('noFeeOnly').checked=Boolean(alert.noFeeOnly);
   document.getElementById('maxPrice').value=alert.maxPrice ? String(Math.round(alert.maxPrice)) : '';
   applyTicketFilters();
   document.getElementById('savedAlerts').style.display='none';
@@ -866,28 +892,31 @@ function removeSavedAlert(index){
 function applyTicketFilters(){
   const rows=[...document.querySelectorAll('.ticket-row')];
   const verifiedOnly=document.getElementById('verifiedOnly')?.checked;
+  const noFeeOnly=document.getElementById('noFeeOnly')?.checked;
   const maxPrice=getMaxPrice();
-  updateTicketCountOptions(rows,verifiedOnly);
+  updateTicketCountOptions(rows,verifiedOnly,noFeeOnly);
   const requested=getRequestedTickets();
   let visible=0;
 
-  syncFiltersToURL(requested,verifiedOnly,maxPrice);
+  syncFiltersToURL(requested,verifiedOnly,maxPrice,noFeeOnly);
 
   rows.forEach(row=>{
     const isExactTicketCount=getListingTickets(row)===requested;
     const passesSellerFilter=!verifiedOnly || !listingIsCommunity(row);
     const total=getListingTotalPrice(row);
+    const passesFeeFilter=!noFeeOnly || getListingFees(row) === 0;
     const passesPriceFilter=!maxPrice || (Number.isFinite(total) && total <= maxPrice);
-    const shouldShow=isExactTicketCount && passesSellerFilter && passesPriceFilter;
+    const shouldShow=isExactTicketCount && passesSellerFilter && passesFeeFilter && passesPriceFilter;
     row.style.display=shouldShow ? '' : 'none';
     if(shouldShow) visible++;
   });
 
   const sellerScope=verifiedOnly ? ' verified listing' : ' listing';
+  const feeScope=noFeeOnly ? ' with no extra fees' : '';
   const priceScope=maxPrice ? ` under $${Math.round(maxPrice)}` : '';
-  document.getElementById('resultCount').innerHTML=`Showing <strong>${visible}${sellerScope}${visible===1?'':'s'}</strong> for exactly ${requested} ticket${requested===1?'':'s'}${priceScope} · Prices updated 2 min ago`;
+  document.getElementById('resultCount').innerHTML=`Showing <strong>${visible}${sellerScope}${visible===1?'':'s'}</strong> for exactly ${requested} ticket${requested===1?'':'s'}${feeScope}${priceScope} · Prices updated 2 min ago`;
   document.getElementById('noResults').style.display=visible ? 'none' : 'block';
-  updateClearFiltersVisibility(requested,verifiedOnly,maxPrice);
+  updateClearFiltersVisibility(requested,verifiedOnly,maxPrice,noFeeOnly);
   updateBestListing(rows);
   updatePerTicketPrices(rows);
   updateDealSummary(rows);
@@ -897,6 +926,7 @@ function applyTicketFilters(){
 }
 initializeTicketCountFromURL();
 initializeVerifiedOnlyFromURL();
+initializeNoFeeOnlyFromURL();
 initializeMaxPriceFromURL();
 initializeSearchFieldsFromURL();
 renderSavedAlerts();
